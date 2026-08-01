@@ -1,0 +1,10 @@
+{
+  "_comment": "スリープ対策で定期的に実ブラウザで開くURL一覧。ここを編集するだけで対象を増減できます。",
+  "urls": [
+    "https://fit-sign.streamlit.app/",
+    "https://oshipay.streamlit.app/",
+    "https://aozora-ruby-remover-n4dpzggyj553wsbnqpl7at.streamlit.app/",
+    "https://huggingface.co/spaces/AutoCraft502/ai-subtitle",
+    "https://huggingface.co/spaces/AutoCraft502/clearcut"
+  ]
+}

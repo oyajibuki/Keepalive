@@ -1,0 +1,12 @@
+{
+  "name": "keepalive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Streamlit / Hugging Face Spaces のスリープを実ブラウザで防ぐ Keep-Alive ツール",
+  "scripts": {
+    "start": "node keep-alive.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
