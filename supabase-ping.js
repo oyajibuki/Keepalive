@@ -30,8 +30,9 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
 
 (async () => {
   if (!URL || !KEY) {
-    log('SUPABASE_URL / SUPABASE_ANON_KEY が未設定のためスキップします。');
-    log('→ リポジトリの Settings > Secrets and variables > Actions で登録してください。');
+    const missing = [!URL && 'SUPABASE_URL', !KEY && 'SUPABASE_ANON_KEY'].filter(Boolean);
+    log(`⏭️ スキップ — 未設定の Secret: ${missing.join(', ')}`);
+    log('→ Settings > Secrets and variables > Actions で登録してください。');
     return; // 未設定は失敗扱いにしない
   }
 
