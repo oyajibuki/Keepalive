@@ -57,12 +57,14 @@ Google 側のブロック対象にもなるので採用しない。
 代わりに [`supabase-ping.js`](supabase-ping.js) が REST API へ直接クエリを投げ、
 Postgres まで到達させて活動を作る。**ログインは不要**。
 
-Secrets に以下を登録すると有効になる（未登録ならスキップされる）。
+設定は2箇所に分かれている。
 
-| Secret | 値 |
-|---|---|
-| `SUPABASE_URL` | `https://xxxxxxxx.supabase.co` |
-| `SUPABASE_ANON_KEY` | anon / publishable キー |
+| 項目 | 置き場所 | 理由 |
+|---|---|---|
+| URL | [`urls.json`](urls.json) の `supabase.url` | 秘密情報ではない。アプリの通信を見れば分かる |
+| anon キー | Secrets の `SUPABASE_ANON_KEY` | 公開鍵とはいえリポジトリに直書きはしない |
+
+キーが未登録ならスキップされる（失敗にはならない）。
 
 > ⚠️ **`service_role` キーは絶対に使わないこと。**
 > 全 RLS を無視できる管理者権限で、漏れると DB を丸ごと操作されてしまう。

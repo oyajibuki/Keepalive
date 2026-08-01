@@ -23,6 +23,7 @@
 
   "_comment_supabase": "無料プランは7日間の低活動で停止する。ログイン後しかクエリが飛ばないアプリでは、ここで直接叩いて活動を作る。",
   "supabase": {
+    "url": "https://tzkwsipyybwlcyzvduqw.supabase.co",
     "table": "templates"
   }
 }

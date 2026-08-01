@@ -12,9 +12,10 @@
  * service_role キーは絶対に使わないこと。全 RLS を無視できる管理者権限であり、
  * 漏れると DB を丸ごと操作されてしまう。
  *
- * 必要な環境変数:
- *   SUPABASE_URL       例: https://xxxxxxxx.supabase.co
- *   SUPABASE_ANON_KEY  anon / publishable キー
+ * 設定:
+ *   URL … urls.json の supabase.url（秘密情報ではないため直書きでよい）
+ *         環境変数 SUPABASE_URL があればそちらを優先
+ *   KEY … 環境変数 SUPABASE_ANON_KEY（GitHub Secrets に登録する）
  */
 const fs = require('fs');
 const path = require('path');
@@ -22,7 +23,10 @@ const path = require('path');
 const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8'));
 const TABLE = (CONFIG.supabase && CONFIG.supabase.table) || 'users';
 
-const URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+// URL は秘密情報ではない（アプリの通信を見れば分かる）ので urls.json に置く。
+// 環境変数が指定されていればそちらを優先する。
+const URL = (process.env.SUPABASE_URL || (CONFIG.supabase && CONFIG.supabase.url) || '')
+  .replace(/\/+$/, '');
 const KEY = process.env.SUPABASE_ANON_KEY || '';
 
 const stamp = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
@@ -30,7 +34,10 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
 
 (async () => {
   if (!URL || !KEY) {
-    const missing = [!URL && 'SUPABASE_URL', !KEY && 'SUPABASE_ANON_KEY'].filter(Boolean);
+    const missing = [
+      !URL && 'SUPABASE_URL (env または urls.json の supabase.url)',
+      !KEY && 'SUPABASE_ANON_KEY (Secret)',
+    ].filter(Boolean);
     log(`⏭️ スキップ — 未設定の Secret: ${missing.join(', ')}`);
     log('→ Settings > Secrets and variables > Actions で登録してください。');
     return; // 未設定は失敗扱いにしない
