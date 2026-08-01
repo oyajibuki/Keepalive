@@ -87,9 +87,27 @@
           "note": "Failed to parse URL from eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a3dzaXB5eWJ3bGN5enZkdXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTI1ODMsImV4cCI6MjA5MDQ2ODU4M30.HZJ2ZBJn43k61-6h1jygDpky5xkWKmkZy1jlWzFS8dA/rest/v1/templates?select=*&limit=1"
         }
       }
+    },
+    {
+      "at": "2026-08-01T07:00:05.664Z",
+      "runId": "30688825239",
+      "results": {
+        "hf:AutoCraft502/ai-subtitle": {
+          "status": "OK",
+          "note": "stage=RUNNING"
+        },
+        "hf:AutoCraft502/clearcut": {
+          "status": "OK",
+          "note": "stage=RUNNING"
+        },
+        "supabase": {
+          "status": "FAIL",
+          "note": "fetch failed"
+        }
+      }
     }
   ],
-  "updated": "2026-08-01T06:57:20.973Z",
+  "updated": "2026-08-01T07:00:05.664Z",
   "targets": [
     {
       "id": "hf:AutoCraft502/ai-subtitle",
