@@ -75,7 +75,9 @@ RLS で行が返らなくてもクエリ自体は Postgres に到達するので
 
 ## ダッシュボード
 
-[`docs/index.html`](docs/index.html) が、URLごとの稼働状況を一覧で表示する。
+### 👉 https://oyajibuki.github.io/Keepalive/
+
+URLごとの稼働状況を一覧で表示する。
 
 - 直近の状態（OK / WARN / FAIL）を対象ごとに表示
 - 直近30回の履歴をドットで可視化
