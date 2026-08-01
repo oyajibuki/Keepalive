@@ -31,6 +31,13 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: node hf-restart.js
 
+      # ログイン後にしかクエリが飛ばないアプリのために、DB へ直接到達させる
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node supabase-ping.js
+
       - name: Install dependencies
         run: npm install --no-package-lock
 

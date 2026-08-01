@@ -45,6 +45,32 @@ Streamlit とは挙動が違う。実測した結果は以下のとおり。
 リポジトリの Secrets に登録しておくと restart API で確実に叩き起こす。
 未設定でも動作し、その場合はブラウザ訪問による起床に任せる。
 
+## Supabase が止まる場合
+
+無料プランは「7日間、活動が少ない」と一時停止される。
+
+FitSign のように **Google ログイン後にしか Supabase へクエリを投げない**アプリは、
+ブラウザで巡回しても Supabase 側には何も届かないため止まってしまう。
+かといってログインを自動化するのは、パスワードと2段階認証をリポジトリに置くことになり、
+Google 側のブロック対象にもなるので採用しない。
+
+代わりに [`supabase-ping.js`](supabase-ping.js) が REST API へ直接クエリを投げ、
+Postgres まで到達させて活動を作る。**ログインは不要**。
+
+Secrets に以下を登録すると有効になる（未登録ならスキップされる）。
+
+| Secret | 値 |
+|---|---|
+| `SUPABASE_URL` | `https://xxxxxxxx.supabase.co` |
+| `SUPABASE_ANON_KEY` | anon / publishable キー |
+
+> ⚠️ **`service_role` キーは絶対に使わないこと。**
+> 全 RLS を無視できる管理者権限で、漏れると DB を丸ごと操作されてしまう。
+> anon キーはもともとクライアントに埋め込む前提の公開鍵なので、こちらを使う。
+
+叩くテーブルは `urls.json` の `supabase.table` で変更できる。
+RLS で行が返らなくてもクエリ自体は Postgres に到達するので、活動としては有効。
+
 ## 対象URLの変更
 
 [`urls.json`](urls.json) を編集して push するだけ。
