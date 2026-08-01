@@ -13,12 +13,28 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const URLS = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8')).urls;
+const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8'));
+
+/**
+ * HF Space の repo id から本体ドメインを導く。
+ *   AutoCraft502/ai-subtitle → https://autocraft502-ai-subtitle.hf.space/
+ * huggingface.co 側のページを見ても無操作タイマーは戻らないため、
+ * 本体ドメインを直接訪問して「使われている」状態を維持する。
+ */
+const hfSpaceUrl = (id) =>
+  `https://${id.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.hf.space/`;
+
+const URLS = [...CONFIG.urls, ...(CONFIG.hfSpaces || []).map(hfSpaceUrl)];
 
 const NAV_TIMEOUT = 60_000;   // ページ遷移のタイムアウト
 const WAKE_TIMEOUT = 120_000; // 起床ボタンを押してからアプリが立ち上がるまでの待ち上限
-const DWELL_MS = 25_000;      // WebSocket を維持するための滞在時間
+const DWELL_SLEEPY = 25_000;  // スリープするホスト: WebSocket 維持のため長めに滞在
+const DWELL_STATIC = 3_000;   // 静的ホスト: 到達確認だけでよい
 const SHOT_DIR = path.join(__dirname, 'screenshots');
+
+/** スリープするホスト（Streamlit / HF Spaces）かどうか */
+const isSleepyHost = (url) =>
+  url.includes('streamlit.app') || url.includes('hf.space');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const stamp = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
@@ -42,6 +58,9 @@ async function findWakeButton(page) {
   return null;
 }
 
+/** 判定が確定したので残りの処理を飛ばす、という意図の内部シグナル */
+class SkipRest extends Error {}
+
 async function visit(browser, url) {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
@@ -61,10 +80,23 @@ async function visit(browser, url) {
 
   try {
     const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-    result.note = `HTTP ${res ? res.status() : '?'}`;
+    const code = res ? res.status() : 0;
+    result.note = `HTTP ${code || '?'}`;
+
+    // HF Space は寝ていると 503、起動処理中は 206 を返す（実測）。
+    // 206 はこの訪問自体が起床トリガーになった証拠なので成功扱いでよい。
+    if (code === 206 && url.includes('hf.space')) {
+      result.note += ' / 起床トリガー済み（APP_STARTING）';
+    } else if (code >= 400) {
+      result.status = 'FAIL';
+      if (url.includes('hf.space')) {
+        result.note += ' / Space が停止中（PAUSED の可能性。手動確認が必要）';
+      }
+      throw new SkipRest();
+    }
 
     // iframe の読み込みを待ってから起床ボタンを探す
-    await sleep(5_000);
+    await sleep(isSleepyHost(url) ? 5_000 : 1_000);
     const btn = await findWakeButton(page);
 
     if (btn) {
@@ -87,7 +119,7 @@ async function visit(browser, url) {
     }
 
     // ここが本題：WebSocket を張ったまま滞在し、アクセスがあった事実を残す
-    await sleep(DWELL_MS);
+    await sleep(isSleepyHost(url) ? DWELL_SLEEPY : DWELL_STATIC);
     result.title = await page.title();
 
     // Streamlit アプリは WebSocket が張れて初めて「起きている」と見なされる
@@ -100,8 +132,10 @@ async function visit(browser, url) {
       }
     }
   } catch (e) {
-    result.status = 'FAIL';
-    result.note = e.message.split('\n')[0];
+    if (!(e instanceof SkipRest)) {
+      result.status = 'FAIL';
+      result.note = e.message.split('\n')[0];
+    }
   }
 
   if (result.status !== 'OK') {

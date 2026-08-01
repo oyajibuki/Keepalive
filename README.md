@@ -25,6 +25,26 @@ JS が実行されないので WebSocket が張られず、Streamlit 側から�
 **iframe の中**にある。外側のページの DOM を見ても中身は空なので、
 起床ボタンは全フレームを走査して探し、生存確認は WebSocket で行っている。
 
+## Hugging Face Spaces の場合
+
+Streamlit とは挙動が違う。実測した結果は以下のとおり。
+
+| 訪問先 | 結果 |
+|---|---|
+| `https://huggingface.co/spaces/<owner>/<name>` | ❌ 起きない。"Restart this Space" が出るだけ |
+| `https://<owner>-<name>.hf.space/` | ✅ 起きる。`SLEEPING` → `APP_STARTING` → `RUNNING` |
+
+つまり**本体ドメインを直接叩く必要がある**。
+`urls.json` の `hfSpaces` に repo id を書けば、
+[`keep-alive.js`](keep-alive.js) が `hf.space` の URL を自動生成して訪問する。
+
+無料の `cpu-basic` は `gcTimeout = 172800`（**48時間**）で寝るため、
+**cron は必ず 48 時間より短い間隔**にすること。
+
+[`hf-restart.js`](hf-restart.js) は補助。`HF_TOKEN`（write 権限）を
+リポジトリの Secrets に登録しておくと restart API で確実に叩き起こす。
+未設定でも動作し、その場合はブラウザ訪問による起床に任せる。
+
 ## 対象URLの変更
 
 [`urls.json`](urls.json) を編集して push するだけ。
@@ -33,14 +53,19 @@ JS が実行されないので WebSocket が張られず、Streamlit 側から�
 {
   "urls": [
     "https://fit-sign.streamlit.app/"
+  ],
+  "hfSpaces": [
+    "AutoCraft502/ai-subtitle"
   ]
 }
 ```
 
+`urls` は実ブラウザで開く対象、`hfSpaces` は HF Space の repo id。
+
 ## 実行スケジュール
 
 [`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml) の cron で設定。
-デフォルトは **2日おき 09:00 JST**。
+デフォルトは **毎日 09:00 JST**（HF の 48 時間制限に対する安全マージン）。
 
 手動実行は Actions タブ → `Keep Alive` → `Run workflow`。
 

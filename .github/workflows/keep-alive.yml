@@ -2,8 +2,9 @@ name: Keep Alive
 
 on:
   schedule:
-    # 2日おき 00:00 UTC = 09:00 JST
-    - cron: '0 0 */2 * *'
+    # 毎日 00:00 UTC = 09:00 JST
+    # HF Spaces の gcTimeout が 48時間 なので、必ずそれより短い間隔で回すこと。
+    - cron: '0 0 * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -16,7 +17,7 @@ concurrency:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -24,12 +25,19 @@ jobs:
         with:
           node-version: '20'
 
+      # HF Space は訪問しても起きないので、先に API で叩き起こす
+      - name: Wake Hugging Face Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: node hf-restart.js
+
       - name: Install dependencies
         run: npm install --no-package-lock
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      # 実ブラウザで巡回し、Streamlit を起こしつつ無操作タイマーをリセットする
       - name: Run keep-alive
         run: node keep-alive.js
 

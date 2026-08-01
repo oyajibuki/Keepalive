@@ -1,10 +1,23 @@
 {
-  "_comment": "スリープ対策で定期的に実ブラウザで開くURL一覧。ここを編集するだけで対象を増減できます。",
+  "_comment": "urls = 実ブラウザで開く対象 / hfSpaces = HF API で起こす Space の repo id",
+
   "urls": [
+    "https://oshipay.streamlit.app/?page=ranking&did=dev_7d761837993847aea016",
     "https://fit-sign.streamlit.app/",
-    "https://oshipay.streamlit.app/",
+    "https://its-me-indol.vercel.app/",
+    "https://oyajibuki.github.io/resize-tool/",
     "https://aozora-ruby-remover-n4dpzggyj553wsbnqpl7at.streamlit.app/",
-    "https://huggingface.co/spaces/AutoCraft502/ai-subtitle",
-    "https://huggingface.co/spaces/AutoCraft502/clearcut"
+    "https://oyajibuki.github.io/csv-app/",
+    "https://itpassport.vercel.app/itp",
+    "https://oyajibuki.github.io/TuneDrop/",
+    "https://trush-quest.vercel.app/#",
+    "https://oyajibuki.github.io/WalkCraft/",
+    "https://fit-sign.streamlit.app/?code=94d7f18f-894a-435c-bd5d-2be295035426&fid=6231718a-0bda-4e61-8eeb-0677000f7dbf"
+  ],
+
+  "_comment_hf": "HF Space は訪問しても起きない。所有者トークンで restart API を叩く必要がある。",
+  "hfSpaces": [
+    "AutoCraft502/ai-subtitle",
+    "AutoCraft502/clearcut"
   ]
 }
