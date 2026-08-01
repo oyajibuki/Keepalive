@@ -145,6 +145,24 @@
   </div>
 
   <div class="card">
+    <h2>実行スケジュール</h2>
+    <div class="help">
+      <p style="margin:0 0 12px" id="sched-line">読み込み中…</p>
+      <div class="actions">
+        <a class="btn ghost" id="sched-link" href="#" target="_blank" rel="noopener">実行時刻を変更</a>
+      </div>
+      <p style="margin:14px 0 0">
+        ワークフローの <code>cron</code> を1行変えるだけです。UTC表記なので
+        <b>JSTの時刻から9を引いた値</b>を書きます（マイナスなら24を足す）。
+        ファイル内に換算表を入れてあります。
+      </p>
+      <p style="margin:8px 0 0">
+        GitHub側の混雑により、実際の開始は数分〜30分ほど遅れることがあります。
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>URLを追加する</h2>
     <div class="help">
       <p style="margin:0 0 12px">
@@ -195,6 +213,21 @@ function render(data) {
     `https://github.com/${repo}/edit/main/urls.json`;
   document.getElementById('actions-link').href =
     `https://github.com/${repo}/actions`;
+  document.getElementById('sched-link').href =
+    `https://github.com/${repo}/edit/main/.github/workflows/keep-alive.yml`;
+
+  // 表示と実態がズレないよう、ワークフローから読み取った値をそのまま出す
+  const sc = data.schedule;
+  const schedEl = document.getElementById('sched-line');
+  if (sc && sc.jst) {
+    schedEl.innerHTML =
+      `${sc.daily ? '毎日' : '指定日の'} <b>${sc.jst}</b> (JST) に自動実行 ` +
+      `<code>cron: ${sc.cron}</code>`;
+  } else if (sc && sc.cron) {
+    schedEl.innerHTML = `<code>cron: ${sc.cron}</code>`;
+  } else {
+    schedEl.textContent = 'スケジュール情報を取得できませんでした。';
+  }
 
   if (!runs.length || !targets.length) {
     document.getElementById('sub').textContent = '実行履歴なし';

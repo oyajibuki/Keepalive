@@ -121,8 +121,27 @@ cd docs && python3 -m http.server 8899
 
 ## 実行スケジュール
 
-[`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml) の cron で設定。
-デフォルトは **毎日 09:00 JST**（HF の 48 時間制限に対する安全マージン）。
+現在は **毎日 08:00 (JST)**。
+
+変更するには [`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml) の
+`cron` を1行書き換える。ダッシュボードはこのファイルを読んで表示するので、
+変えれば表示も自動で追従する。
+
+cron は UTC 表記なので **JSTの時刻から9を引いた値**を書く（マイナスなら24を足す）。
+
+| JST | cron |
+|---|---|
+| 06:00 | `0 21 * * *` |
+| 07:00 | `0 22 * * *` |
+| **08:00** | **`0 23 * * *`** |
+| 09:00 | `0 0 * * *` |
+| 12:00 | `0 3 * * *` |
+| 21:00 | `0 12 * * *` |
+
+分を変える場合は先頭の数字（JST 08:30 → `30 23 * * *`）。
+
+> ⚠️ HF Spaces の `gcTimeout` が48時間なので、実行間隔は必ず48時間未満にすること。
+> また GitHub 側の混雑により、実際の開始は数分〜30分ほど遅れることがある。
 
 手動実行は Actions タブ → `Keep Alive` → `Run workflow`。
 

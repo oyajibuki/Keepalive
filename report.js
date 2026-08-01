@@ -9,7 +9,40 @@ const path = require('path');
 const { RESULTS_DIR } = require('./results');
 
 const HISTORY = path.join(__dirname, 'docs', 'history.json');
+const WORKFLOW = path.join(__dirname, '.github', 'workflows', 'keep-alive.yml');
 const MAX_RUNS = 90;
+
+/**
+ * ワークフローの cron を読んで JST に直す。
+ * ダッシュボードの表示と実際の設定がズレないよう、値はここから拾う。
+ */
+function readSchedule() {
+  try {
+    const yml = fs.readFileSync(WORKFLOW, 'utf8');
+    // コメント行を除いてから cron を探す
+    const line = yml
+      .split('\n')
+      .filter((l) => !/^\s*#/.test(l))
+      .find((l) => /-\s*cron:/.test(l));
+    if (!line) return null;
+
+    const expr = (line.match(/-\s*cron:\s*['"]?([^'"\n]+?)['"]?\s*$/) || [])[1];
+    if (!expr) return null;
+
+    const [min, hour, dom, mon, dow] = expr.trim().split(/\s+/);
+    // 日付側がすべて * のときだけ「毎日」と言える
+    const daily = [dom, mon, dow].every((f) => f === '*');
+
+    if (!/^\d+$/.test(min) || !/^\d+$/.test(hour)) {
+      return { cron: expr, jst: null, daily }; // */2 などの時刻は換算しない
+    }
+    const jstHour = (Number(hour) + 9) % 24;
+    const jst = `${String(jstHour).padStart(2, '0')}:${String(Number(min)).padStart(2, '0')}`;
+    return { cron: expr, jst, daily };
+  } catch {
+    return null;
+  }
+}
 
 function loadHistory() {
   try {
@@ -61,6 +94,7 @@ history.updated = run.at;
 history.targets = items.map((it) => ({ id: it.id, label: it.label, type: it.type }));
 
 history.repo = process.env.GITHUB_REPOSITORY || 'oyajibuki/Keepalive';
+history.schedule = readSchedule();
 
 fs.mkdirSync(path.dirname(HISTORY), { recursive: true });
 fs.writeFileSync(HISTORY, JSON.stringify(history, null, 2));
