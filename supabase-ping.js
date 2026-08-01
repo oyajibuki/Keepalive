@@ -25,10 +25,28 @@ const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'ut
 const TABLE = (CONFIG.supabase && CONFIG.supabase.table) || 'users';
 
 // URL は秘密情報ではない（アプリの通信を見れば分かる）ので urls.json に置く。
-// 環境変数が指定されていればそちらを優先する。
-const URL = (process.env.SUPABASE_URL || (CONFIG.supabase && CONFIG.supabase.url) || '')
-  .replace(/\/+$/, '');
-const KEY = process.env.SUPABASE_ANON_KEY || '';
+// 環境変数が指定されていればそちらを優先するが、値が壊れていたら設定ファイルに戻す。
+// Secrets はマスクされて中身が見えず、原因究明が難しいため。
+function normalizeUrl(raw) {
+  if (!raw) return null;
+  let v = String(raw).trim().replace(/^['"]|['"]$/g, '').replace(/\/+$/, '');
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + v; // プロトコル抜けを補う
+  try {
+    new globalThis.URL(v);
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+const fromEnv = normalizeUrl(process.env.SUPABASE_URL);
+const fromFile = normalizeUrl(CONFIG.supabase && CONFIG.supabase.url);
+if (process.env.SUPABASE_URL && !fromEnv) {
+  console.error('⚠️ Secret の SUPABASE_URL が URL として解釈できません。urls.json の値を使います。');
+}
+const URL = fromEnv || fromFile || '';
+const KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
 
 const stamp = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 const log = (...a) => console.log(`[${stamp()}]`, ...a);
