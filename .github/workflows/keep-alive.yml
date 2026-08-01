@@ -38,7 +38,7 @@ jobs:
       # ログイン後にしかクエリが飛ばないアプリのために、DB へ直接到達させる
       - name: Ping Supabase
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # URL は秘密情報ではないので urls.json 側で管理する
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: node supabase-ping.js
 

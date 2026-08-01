@@ -13,8 +13,7 @@
  * 漏れると DB を丸ごと操作されてしまう。
  *
  * 設定:
- *   URL … urls.json の supabase.url（秘密情報ではないため直書きでよい）
- *         環境変数 SUPABASE_URL があればそちらを優先
+ *   URL … urls.json の supabase.url（秘密情報ではないため直書き）
  *   KEY … 環境変数 SUPABASE_ANON_KEY（GitHub Secrets に登録する）
  */
 const fs = require('fs');
@@ -24,9 +23,9 @@ const { writeResults } = require('./results');
 const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8'));
 const TABLE = (CONFIG.supabase && CONFIG.supabase.table) || 'users';
 
-// URL は秘密情報ではない（アプリの通信を見れば分かる）ので urls.json に置く。
-// 環境変数が指定されていればそちらを優先するが、値が壊れていたら設定ファイルに戻す。
-// Secrets はマスクされて中身が見えず、原因究明が難しいため。
+// URL は秘密情報ではない（アプリの通信を見れば分かる）ので urls.json だけを見る。
+// Secret から読む方式は値がマスクされて中身を確認できず、
+// 打ち間違いがあっても原因が追えないため採用しない。
 function normalizeUrl(raw) {
   if (!raw) return null;
   let v = String(raw).trim().replace(/^['"]|['"]$/g, '').replace(/\/+$/, '');
@@ -40,12 +39,7 @@ function normalizeUrl(raw) {
   }
 }
 
-const fromEnv = normalizeUrl(process.env.SUPABASE_URL);
-const fromFile = normalizeUrl(CONFIG.supabase && CONFIG.supabase.url);
-if (process.env.SUPABASE_URL && !fromEnv) {
-  console.error('⚠️ Secret の SUPABASE_URL が URL として解釈できません。urls.json の値を使います。');
-}
-const URL = fromEnv || fromFile || '';
+const URL = normalizeUrl(CONFIG.supabase && CONFIG.supabase.url) || '';
 const KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
 
 const stamp = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
@@ -54,8 +48,8 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
 (async () => {
   if (!URL || !KEY) {
     const missing = [
-      !URL && 'SUPABASE_URL (env または urls.json の supabase.url)',
-      !KEY && 'SUPABASE_ANON_KEY (Secret)',
+      !URL && 'urls.json の supabase.url',
+      !KEY && 'Secret の SUPABASE_ANON_KEY',
     ].filter(Boolean);
     log(`⏭️ スキップ — 未設定の Secret: ${missing.join(', ')}`);
     log('→ Settings > Secrets and variables > Actions で登録してください。');
