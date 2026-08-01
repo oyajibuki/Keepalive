@@ -14,6 +14,10 @@ concurrency:
   group: keep-alive
   cancel-in-progress: false
 
+# 履歴 (docs/history.json) を書き戻すため
+permissions:
+  contents: write
+
 jobs:
   ping:
     runs-on: ubuntu-latest
@@ -45,13 +49,42 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # 実ブラウザで巡回し、Streamlit を起こしつつ無操作タイマーをリセットする
+      # 失敗しても履歴は残したいので continue-on-error にし、最後に判定する
       - name: Run keep-alive
+        id: keepalive
+        continue-on-error: true
         run: node keep-alive.js
 
+      # ダッシュボード用の履歴を更新して push する
+      - name: Update dashboard history
+        if: always()
+        run: |
+          node report.js
+          if [ -n "$(git status --porcelain docs/history.json)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/history.json
+            git commit -m "履歴を更新 [skip ci]"
+            # 同時実行や手動 push と競合した場合に備えてリトライする
+            for i in 1 2 3; do
+              git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
+              sleep 5
+            done
+            echo "履歴の push に失敗しました" >&2
+            exit 1
+          fi
+
       - name: Upload screenshots on failure
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: failure-screenshots
           path: screenshots/
           if-no-files-found: ignore
+
+      # 履歴を残したうえで、巡回が失敗していればジョブを失敗させる
+      - name: Fail if keep-alive failed
+        if: steps.keepalive.outcome == 'failure'
+        run: |
+          echo "keep-alive.js が失敗しました。ダッシュボードで対象を確認してください。" >&2
+          exit 1

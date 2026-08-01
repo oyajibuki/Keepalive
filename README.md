@@ -73,6 +73,33 @@ Postgres まで到達させて活動を作る。**ログインは不要**。
 叩くテーブルは `urls.json` の `supabase.table` で変更できる。
 RLS で行が返らなくてもクエリ自体は Postgres に到達するので、活動としては有効。
 
+## ダッシュボード
+
+[`docs/index.html`](docs/index.html) が、URLごとの稼働状況を一覧で表示する。
+
+- 直近の状態（OK / WARN / FAIL）を対象ごとに表示
+- 直近30回の履歴をドットで可視化
+- 対象ごとの成功率
+- `urls.json` の編集画面への直リンク
+
+実行結果は毎回 [`docs/history.json`](docs/history.json) に追記され、
+ワークフローがリポジトリへ書き戻す（最大90回分＝約3ヶ月）。
+
+ローカルで見る場合:
+
+```bash
+cd docs && python3 -m http.server 8899
+```
+
+### 判定の意味
+
+| 表示 | 意味 |
+|---|---|
+| `OK` | 正常。Streamlit は WebSocket 接続まで確認済み |
+| `WARN` | 到達はしたが期待どおりでない（WebSocket 未接続など） |
+| `FAIL` | 到達できない、または起床に失敗 |
+| `SKIP` | 設定が無いため未実行（Supabase のキー未登録など） |
+
 ## 対象URLの変更
 
 [`urls.json`](urls.json) を編集して push するだけ。

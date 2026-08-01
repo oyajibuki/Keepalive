@@ -18,6 +18,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { writeResults } = require('./results');
 
 const SPACES = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8')).hfSpaces || [];
 const TOKEN = process.env.HF_TOKEN;
@@ -108,6 +109,17 @@ async function handle(id) {
     log(`  ${icon} ${r.status}${r.restarted ? ' (再起動しました)' : ''} — ${r.note}`);
     results.push(r);
   }
+
+  writeResults(
+    'hf',
+    results.map((r) => ({
+      id: `hf:${r.id}`,
+      label: r.id,
+      type: 'hf-api',
+      status: r.status,
+      note: r.note,
+    }))
+  );
 
   const summary = process.env.GITHUB_STEP_SUMMARY;
   if (summary) {

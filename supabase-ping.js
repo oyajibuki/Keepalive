@@ -19,6 +19,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { writeResults } = require('./results');
 
 const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8'));
 const TABLE = (CONFIG.supabase && CONFIG.supabase.table) || 'users';
@@ -40,6 +41,15 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
     ].filter(Boolean);
     log(`⏭️ スキップ — 未設定の Secret: ${missing.join(', ')}`);
     log('→ Settings > Secrets and variables > Actions で登録してください。');
+    writeResults('supabase', [
+      {
+        id: 'supabase',
+        label: 'Supabase',
+        type: 'supabase',
+        status: 'SKIP',
+        note: `未設定: ${missing.join(', ')}`,
+      },
+    ]);
     return; // 未設定は失敗扱いにしない
   }
 
@@ -51,13 +61,23 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
     const res = await fetch(endpoint, {
       headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
     });
+    const body = await res.text();
     note = `HTTP ${res.status}`;
 
-    // RLS で行が返らなくてもクエリ自体は Postgres に到達しており、活動として記録される。
-    // 401/404 は設定ミスなので気付けるようにする。
-    if (res.status === 401 || res.status === 403) {
+    // 目的は「Postgres まで到達させて活動を作ること」であって、行を読むことではない。
+    // そのため権限拒否 (42501) や RLS による空配列も成功とみなす。
+    //   42501            … PostgREST が Postgres に接続して拒否された = 到達済み
+    //   Invalid API key  … API ゲートウェイで弾かれた = 未到達。これは失敗
+    const denied = body.includes('"42501"');
+    const invalidKey = body.includes('Invalid API key');
+
+    if (res.ok) {
+      note += ` / クエリ到達 (${body.length} bytes)`;
+    } else if (denied) {
+      note += ` / 権限なしだが Postgres に到達（keep-alive としては有効）`;
+    } else if (invalidKey) {
       status = 'FAIL';
-      note += ' / キーが無効か権限不足です';
+      note += ' / APIキーが無効です';
     } else if (res.status === 404) {
       status = 'FAIL';
       note += ` / テーブル "${TABLE}" が見つかりません（urls.json の supabase.table を確認）`;
@@ -65,8 +85,8 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
       status = 'FAIL';
       note += ' / プロジェクトが停止中の可能性があります';
     } else {
-      const body = await res.text();
-      note += ` / クエリ到達 (${body.length} bytes)`;
+      status = 'WARN';
+      note += ` / 想定外の応答: ${body.slice(0, 80)}`;
     }
   } catch (e) {
     status = 'FAIL';
@@ -75,6 +95,16 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
 
   const icon = status === 'OK' ? '✅' : '❌';
   log(`${icon} ${status} — ${TABLE} — ${note}`);
+
+  writeResults('supabase', [
+    {
+      id: 'supabase',
+      label: `Supabase (${TABLE})`,
+      type: 'supabase',
+      status,
+      note,
+    },
+  ]);
 
   const summary = process.env.GITHUB_STEP_SUMMARY;
   if (summary) {

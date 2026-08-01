@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
+const { writeResults } = require('./results');
 
 const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8'));
 
@@ -162,6 +163,22 @@ async function visit(browser, url) {
   }
 
   await browser.close();
+
+  // ダッシュボード用に結果を残す
+  writeResults(
+    'browser',
+    results.map((r) => ({
+      id: r.url,
+      label: r.url,
+      type: r.url.includes('streamlit.app')
+        ? 'streamlit'
+        : r.url.includes('hf.space')
+          ? 'hf'
+          : 'static',
+      status: r.status,
+      note: r.note,
+    }))
+  );
 
   // GitHub Actions のサマリに表を出す
   const summary = process.env.GITHUB_STEP_SUMMARY;

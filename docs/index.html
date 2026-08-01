@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keep-Alive ダッシュボード</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #fff;
+    --fg: #1a1d21;
+    --muted: #6b7280;
+    --line: #e3e6ea;
+    --ok: #22a06b;
+    --warn: #d98324;
+    --fail: #d64545;
+    --skip: #9aa3ad;
+    --accent: #2f6feb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a; --card: #1d2126; --fg: #e8eaed; --muted: #9aa3ad;
+      --line: #2c3238; --ok: #35c48a; --warn: #e0a044; --fail: #f06a6a;
+      --skip: #6b7480; --accent: #6c9bff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px 64px;
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+  .banner {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 16px; border-radius: 10px; margin-bottom: 20px;
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 4px solid var(--ok);
+  }
+  .banner.has-fail { border-left-color: var(--fail); }
+  .banner.has-warn { border-left-color: var(--warn); }
+  .banner b { font-size: 15px; }
+
+  .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-left: auto; }
+  .stat { text-align: right; }
+  .stat .n { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11px; color: var(--muted); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line);
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+
+  .url { max-width: 380px; }
+  .url a { color: var(--fg); text-decoration: none; word-break: break-all; }
+  .url a:hover { color: var(--accent); text-decoration: underline; }
+  .tag {
+    display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--line); color: var(--muted);
+    margin-left: 6px; vertical-align: middle; white-space: nowrap;
+  }
+
+  .pill {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap; color: #fff;
+  }
+  .pill.OK { background: var(--ok); }
+  .pill.WARN { background: var(--warn); }
+  .pill.FAIL { background: var(--fail); }
+  .pill.SKIP, .pill.NONE { background: var(--skip); }
+
+  .spark { display: flex; gap: 2px; align-items: center; }
+  .dot { width: 9px; height: 18px; border-radius: 2px; background: var(--skip); }
+  .dot.OK { background: var(--ok); }
+  .dot.WARN { background: var(--warn); }
+  .dot.FAIL { background: var(--fail); }
+  .dot.NONE { background: var(--line); }
+
+  .rate { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { color: var(--muted); font-size: 12px; max-width: 280px; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 8px 14px; border-radius: 8px;
+    background: var(--accent); color: #fff; text-decoration: none;
+    font-size: 13px; font-weight: 600; border: 0; cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .help { font-size: 12px; color: var(--muted); padding: 12px 16px 16px; }
+  code {
+    background: var(--bg); border: 1px solid var(--line);
+    padding: 1px 5px; border-radius: 4px; font-size: 12px;
+  }
+  .empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Keep-Alive ダッシュボード</h1>
+  <div class="sub" id="sub">読み込み中…</div>
+
+  <div id="banner" class="banner" hidden>
+    <b id="banner-msg"></b>
+    <div class="stats">
+      <div class="stat"><div class="n" id="s-ok">–</div><div class="l">正常</div></div>
+      <div class="stat"><div class="n" id="s-warn">–</div><div class="l">注意</div></div>
+      <div class="stat"><div class="n" id="s-fail">–</div><div class="l">失敗</div></div>
+      <div class="stat"><div class="n" id="s-runs">–</div><div class="l">記録回数</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>監視対象</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>状態</th>
+            <th>URL / 対象</th>
+            <th>直近30回</th>
+            <th>成功率</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden>
+      まだ実行履歴がありません。Actions から <code>Keep Alive</code> を1回実行してください。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>URLを追加する</h2>
+    <div class="help">
+      <p style="margin:0 0 12px">
+        監視対象は <code>urls.json</code> で管理しています。下のボタンからGitHub上で直接編集できます。
+      </p>
+      <div class="actions">
+        <a class="btn" id="edit-link" href="#" target="_blank" rel="noopener">urls.json を編集</a>
+        <a class="btn ghost" id="actions-link" href="#" target="_blank" rel="noopener">実行履歴を見る</a>
+        <button class="btn ghost" id="run-link" type="button">今すぐ実行する方法</button>
+      </div>
+      <p style="margin:14px 0 0">
+        <code>urls.json</code> の <code>urls</code> 配列に1行足すだけです。
+        Hugging Face Spaceの場合は <code>hfSpaces</code> に <code>オーナー名/Space名</code> を追加してください
+        （本体ドメインは自動生成されます）。
+      </p>
+      <p id="run-help" hidden style="margin:12px 0 0">
+        リポジトリの <b>Actions</b> タブ → <b>Keep Alive</b> → <b>Run workflow</b> で即時実行できます。
+        通常は毎日 09:00 (JST) に自動実行されます。
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const SPARK_N = 30;
+const REPO_FALLBACK = 'oyajibuki/Keepalive';
+
+const fmt = (iso) => {
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return d.toLocaleString('ja-JP', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit'
+  });
+};
+
+function statusOf(run, id) {
+  const r = run.results && run.results[id];
+  return r ? r.status : 'NONE';
+}
+
+function render(data) {
+  const runs = data.runs || [];
+  const targets = data.targets || [];
+  const repo = data.repo || REPO_FALLBACK;
+
+  document.getElementById('edit-link').href =
+    `https://github.com/${repo}/edit/main/urls.json`;
+  document.getElementById('actions-link').href =
+    `https://github.com/${repo}/actions`;
+
+  if (!runs.length || !targets.length) {
+    document.getElementById('sub').textContent = '実行履歴なし';
+    document.getElementById('empty').hidden = false;
+    return;
+  }
+
+  const last = runs[runs.length - 1];
+  document.getElementById('sub').textContent =
+    `最終実行 ${fmt(last.at)} ・ 監視対象 ${targets.length} 件`;
+
+  // 直近実行の集計
+  let ok = 0, warn = 0, fail = 0;
+  for (const t of targets) {
+    const s = statusOf(last, t.id);
+    if (s === 'OK') ok++;
+    else if (s === 'WARN') warn++;
+    else if (s === 'FAIL') fail++;
+  }
+
+  const banner = document.getElementById('banner');
+  banner.hidden = false;
+  banner.classList.toggle('has-fail', fail > 0);
+  banner.classList.toggle('has-warn', fail === 0 && warn > 0);
+  document.getElementById('banner-msg').textContent =
+    fail > 0 ? `${fail} 件が失敗しています`
+    : warn > 0 ? `${warn} 件に注意が必要です`
+    : 'すべて正常に稼働しています';
+  document.getElementById('s-ok').textContent = ok;
+  document.getElementById('s-warn').textContent = warn;
+  document.getElementById('s-fail').textContent = fail;
+  document.getElementById('s-runs').textContent = runs.length;
+
+  const recent = runs.slice(-SPARK_N);
+  const tbody = document.getElementById('rows');
+
+  for (const t of targets) {
+    // 成功率は「記録がある回」だけで計算する
+    const seen = runs.filter((r) => statusOf(r, t.id) !== 'NONE');
+    const good = seen.filter((r) => statusOf(r, t.id) === 'OK').length;
+    const rate = seen.length ? Math.round((good / seen.length) * 100) : null;
+
+    const cur = statusOf(last, t.id);
+    const note = (last.results[t.id] && last.results[t.id].note) || '';
+
+    const tr = document.createElement('tr');
+
+    const tdS = document.createElement('td');
+    const pill = document.createElement('span');
+    pill.className = 'pill ' + cur;
+    pill.textContent = cur === 'NONE' ? '未実行' : cur;
+    tdS.appendChild(pill);
+
+    const tdU = document.createElement('td');
+    tdU.className = 'url';
+    if (t.type === 'hf-api' || t.type === 'supabase') {
+      tdU.textContent = t.label;
+    } else {
+      const a = document.createElement('a');
+      a.href = t.id; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = t.label;
+      tdU.appendChild(a);
+    }
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = t.type;
+    tdU.appendChild(tag);
+
+    const tdSp = document.createElement('td');
+    const spark = document.createElement('div');
+    spark.className = 'spark';
+    for (const r of recent) {
+      const s = statusOf(r, t.id);
+      const d = document.createElement('div');
+      d.className = 'dot ' + s;
+      d.title = `${fmt(r.at)} — ${s === 'NONE' ? '記録なし' : s}`;
+      spark.appendChild(d);
+    }
+    tdSp.appendChild(spark);
+
+    const tdR = document.createElement('td');
+    tdR.className = 'rate';
+    tdR.textContent = rate === null ? '—' : `${rate}% (${good}/${seen.length})`;
+
+    const tdN = document.createElement('td');
+    tdN.className = 'note';
+    tdN.textContent = note;
+
+    tr.append(tdS, tdU, tdSp, tdR, tdN);
+    tbody.appendChild(tr);
+  }
+}
+
+document.getElementById('run-link').addEventListener('click', () => {
+  const el = document.getElementById('run-help');
+  el.hidden = !el.hidden;
+});
+
+fetch('history.json?t=' + Date.now())
+  .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(render)
+  .catch((e) => {
+    document.getElementById('sub').textContent = 'history.json を読み込めませんでした: ' + e.message;
+    document.getElementById('empty').hidden = false;
+  });
+</script>
+</body>
+</html>
