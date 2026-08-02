@@ -33,12 +33,27 @@ function readSchedule() {
     // 日付側がすべて * のときだけ「毎日」と言える
     const daily = [dom, mon, dow].every((f) => f === '*');
 
-    if (!/^\d+$/.test(min) || !/^\d+$/.test(hour)) {
-      return { cron: expr, jst: null, daily }; // */2 などの時刻は換算しない
+    // '0 11,23 * * *' のようなカンマ区切りの複数時刻に対応する
+    if (!/^\d+$/.test(min) || !/^\d+(,\d+)*$/.test(hour)) {
+      return { cron: expr, jst: null, times: null, daily }; // */2 などは換算しない
     }
-    const jstHour = (Number(hour) + 9) % 24;
-    const jst = `${String(jstHour).padStart(2, '0')}:${String(Number(min)).padStart(2, '0')}`;
-    return { cron: expr, jst, daily };
+    const times = hour
+      .split(',')
+      .map((h) => (Number(h) + 9) % 24)
+      .sort((a, b) => a - b)
+      .map((h) => `${String(h).padStart(2, '0')}:${String(Number(min)).padStart(2, '0')}`);
+
+    // 等間隔なら「Nコマおき」と言えるので、その間隔も出す
+    let everyHours = null;
+    if (times.length > 1) {
+      const hs = hour.split(',').map(Number).sort((a, b) => a - b);
+      const gaps = hs.map((h, i) => (i === 0 ? h + 24 - hs[hs.length - 1] : h - hs[i - 1]));
+      if (new Set(gaps).size === 1) everyHours = gaps[0];
+    } else {
+      everyHours = 24;
+    }
+
+    return { cron: expr, jst: times[0], times, everyHours, daily };
   } catch {
     return null;
   }
@@ -83,7 +98,9 @@ const run = {
   results: {},
 };
 for (const it of items) {
-  run.results[it.id] = { status: it.status, note: it.note };
+  const r = { status: it.status, note: it.note };
+  if (it.woke) r.woke = true; // 寝ていたのを起こした回
+  run.results[it.id] = r;
 }
 
 history.runs.push(run);

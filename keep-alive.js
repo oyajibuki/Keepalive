@@ -177,6 +177,9 @@ async function visit(browser, url) {
           : 'static',
       status: r.status,
       note: r.note,
+      // 寝ていたので起こした、という事実を残す。
+      // これが続くなら実行間隔が足りていないという判断材料になる。
+      woke: r.woke,
     }))
   );
 

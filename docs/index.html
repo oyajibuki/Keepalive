@@ -89,6 +89,11 @@
   .dot.WARN { background: var(--warn); }
   .dot.FAIL { background: var(--fail); }
   .dot.NONE { background: var(--line); }
+  /* 寝ていたのを起こした回は下線で示す */
+  .dot.woke { box-shadow: inset 0 -4px 0 0 var(--warn); }
+
+  .woke-n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .woke-n.hot { color: var(--warn); font-weight: 600; }
 
   .rate { font-variant-numeric: tabular-nums; white-space: nowrap; }
   .note { color: var(--muted); font-size: 12px; max-width: 280px; }
@@ -133,6 +138,7 @@
             <th>URL / 対象</th>
             <th>直近30回</th>
             <th>成功率</th>
+            <th>起床</th>
             <th>備考</th>
           </tr>
         </thead>
@@ -219,9 +225,11 @@ function render(data) {
   // 表示と実態がズレないよう、ワークフローから読み取った値をそのまま出す
   const sc = data.schedule;
   const schedEl = document.getElementById('sched-line');
-  if (sc && sc.jst) {
+  if (sc && sc.times && sc.times.length) {
+    const every =
+      sc.everyHours && sc.everyHours < 24 ? `<b>${sc.everyHours}時間おき</b>` : '毎日';
     schedEl.innerHTML =
-      `${sc.daily ? '毎日' : '指定日の'} <b>${sc.jst}</b> (JST) に自動実行 ` +
+      `${sc.daily ? every : '指定日の'} <b>${sc.times.join(' / ')}</b> (JST) に自動実行 ` +
       `<code>cron: ${sc.cron}</code>`;
   } else if (sc && sc.cron) {
     schedEl.innerHTML = `<code>cron: ${sc.cron}</code>`;
@@ -301,9 +309,12 @@ function render(data) {
     spark.className = 'spark';
     for (const r of recent) {
       const s = statusOf(r, t.id);
+      const w = !!(r.results[t.id] && r.results[t.id].woke);
       const d = document.createElement('div');
-      d.className = 'dot ' + s;
-      d.title = `${fmt(r.at)} — ${s === 'NONE' ? '記録なし' : s}`;
+      d.className = 'dot ' + s + (w ? ' woke' : '');
+      d.title =
+        `${fmt(r.at)} — ${s === 'NONE' ? '記録なし' : s}` +
+        (w ? '（寝ていたので起こした）' : '');
       spark.appendChild(d);
     }
     tdSp.appendChild(spark);
@@ -312,11 +323,25 @@ function render(data) {
     tdR.className = 'rate';
     tdR.textContent = rate === null ? '—' : `${rate}% (${good}/${seen.length})`;
 
+    // 何回「寝ていたので起こした」か。多いなら実行間隔が足りていない。
+    const wokeCount = seen.filter((r) => r.results[t.id].woke).length;
+    const tdW = document.createElement('td');
+    tdW.className = 'woke-n' + (wokeCount > 0 ? ' hot' : '');
+    if (!seen.length) {
+      tdW.textContent = '—';
+    } else if (wokeCount === 0) {
+      tdW.textContent = '0';
+      tdW.title = '一度も寝ていません。間隔は足りています。';
+    } else {
+      tdW.textContent = `😴 ${wokeCount}回`;
+      tdW.title = `${seen.length}回中${wokeCount}回、寝ているのを起こしました。`;
+    }
+
     const tdN = document.createElement('td');
     tdN.className = 'note';
     tdN.textContent = note;
 
-    tr.append(tdS, tdU, tdSp, tdR, tdN);
+    tr.append(tdS, tdU, tdSp, tdR, tdW, tdN);
     tbody.appendChild(tr);
   }
 }
