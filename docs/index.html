@@ -244,8 +244,14 @@ function render(data) {
   }
 
   const last = runs[runs.length - 1];
+  const hoursAgo = (Date.now() - new Date(last.at).getTime()) / 36e5;
   document.getElementById('sub').textContent =
-    `最終実行 ${fmt(last.at)} ・ 監視対象 ${targets.length} 件`;
+    `最終実行 ${fmt(last.at)}（${hoursAgo.toFixed(1)}時間前） ・ 監視対象 ${targets.length} 件`;
+
+  // GitHub はスケジュール実行を落とすことがある。
+  // 予定間隔を大きく超えていたら、それ自体を異常として知らせる。
+  const every = (data.schedule && data.schedule.everyHours) || 24;
+  const overdue = hoursAgo > every * 1.5;
 
   // 直近実行の集計
   let ok = 0, warn = 0, fail = 0;
@@ -258,12 +264,14 @@ function render(data) {
 
   const banner = document.getElementById('banner');
   banner.hidden = false;
-  banner.classList.toggle('has-fail', fail > 0);
-  banner.classList.toggle('has-warn', fail === 0 && warn > 0);
+  banner.classList.toggle('has-fail', fail > 0 || overdue);
+  banner.classList.toggle('has-warn', !overdue && fail === 0 && warn > 0);
   document.getElementById('banner-msg').textContent =
-    fail > 0 ? `${fail} 件が失敗しています`
-    : warn > 0 ? `${warn} 件に注意が必要です`
-    : 'すべて正常に稼働しています';
+    overdue
+      ? `⚠️ ${hoursAgo.toFixed(1)}時間 実行されていません（予定は${every}時間おき）`
+      : fail > 0 ? `${fail} 件が失敗しています`
+      : warn > 0 ? `${warn} 件に注意が必要です`
+      : 'すべて正常に稼働しています';
   document.getElementById('s-ok').textContent = ok;
   document.getElementById('s-warn').textContent = warn;
   document.getElementById('s-fail').textContent = fail;
