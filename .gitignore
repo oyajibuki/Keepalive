@@ -1,6 +1,8 @@
 node_modules/
 package-lock.json
 *.log
+# ダッシュボードに表示するデバッグログなので、これだけは追跡する
+!docs/last-run.log
 .DS_Store
 screenshots/
 .results/
