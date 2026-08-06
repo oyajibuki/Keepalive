@@ -61,18 +61,38 @@ jobs:
         with:
           node-version: '20'
 
+      # ダッシュボードに貼り出すデバッグログ。各ステップの出力を tee で溜めていく。
+      # Actions のログ本体はブラウザから CORS で読めないので、こちらを正とする。
+      - name: Start debug log
+        run: |
+          mkdir -p docs
+          {
+            echo "=== Keep Alive デバッグログ ==="
+            echo "run    : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "trigger: ${{ github.event_name }}"
+            echo "started: $(date -u '+%Y-%m-%d %H:%M:%S') UTC"
+            echo ""
+          } > docs/last-run.log
+
       # HF Space は訪問しても起きないので、先に API で叩き起こす
       - name: Wake Hugging Face Spaces
+        shell: bash
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: node hf-restart.js
+        run: |
+          echo "--- Wake Hugging Face Spaces ---" >> docs/last-run.log
+          node hf-restart.js 2>&1 | sed -E -f scrub.sed | tee -a docs/last-run.log
 
       # ログイン後にしかクエリが飛ばないアプリのために、DB へ直接到達させる
       - name: Ping Supabase
+        shell: bash
         env:
           # URL は秘密情報ではないので urls.json 側で管理する
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: node supabase-ping.js
+        run: |
+          echo "" >> docs/last-run.log
+          echo "--- Ping Supabase ---" >> docs/last-run.log
+          node supabase-ping.js 2>&1 | sed -E -f scrub.sed | tee -a docs/last-run.log
 
       - name: Install dependencies
         run: npm install --no-package-lock
@@ -84,18 +104,30 @@ jobs:
       # 失敗しても履歴は残したいので continue-on-error にし、最後に判定する
       - name: Run keep-alive
         id: keepalive
+        shell: bash
         continue-on-error: true
-        run: node keep-alive.js
+        run: |
+          echo "" >> docs/last-run.log
+          echo "--- Run keep-alive ---" >> docs/last-run.log
+          node keep-alive.js 2>&1 | sed -E -f scrub.sed | tee -a docs/last-run.log
 
-      # ダッシュボード用の履歴を更新して push する
+      # ダッシュボード用の履歴とデバッグログを更新して push する
       - name: Update dashboard history
         if: always()
+        shell: bash
         run: |
-          node report.js
-          if [ -n "$(git status --porcelain docs/history.json)" ]; then
+          echo "" >> docs/last-run.log
+          echo "--- Result ---" >> docs/last-run.log
+          echo "keep-alive: ${{ steps.keepalive.outcome }}" >> docs/last-run.log
+
+          node report.js 2>&1 | sed -E -f scrub.sed | tee -a docs/last-run.log
+
+          echo "finished: $(date -u '+%Y-%m-%d %H:%M:%S') UTC" >> docs/last-run.log
+
+          if [ -n "$(git status --porcelain docs/history.json docs/last-run.log)" ]; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs/history.json
+            git add docs/history.json docs/last-run.log
             git commit -m "履歴を更新 [skip ci]"
             # 同時実行や手動 push と競合した場合に備えてリトライする
             for i in 1 2 3; do
