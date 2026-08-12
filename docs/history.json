@@ -3130,9 +3130,80 @@
           "note": "HTTP 200"
         }
       }
+    },
+    {
+      "at": "2026-08-12T06:49:32.405Z",
+      "runId": "31571191253",
+      "results": {
+        "hf:AutoCraft502/ai-subtitle": {
+          "status": "OK",
+          "note": "stage=RUNNING"
+        },
+        "hf:AutoCraft502/clearcut": {
+          "status": "OK",
+          "note": "stage=RUNNING"
+        },
+        "supabase": {
+          "status": "OK",
+          "note": "HTTP 200 / クエリ到達 (720 bytes)"
+        },
+        "https://oshipay.streamlit.app/?page=ranking&did=dev_7d761837993847aea016": {
+          "status": "OK",
+          "note": "HTTP 200 / WebSocket 接続確認"
+        },
+        "https://fit-sign.streamlit.app/": {
+          "status": "OK",
+          "note": "HTTP 200 / WebSocket 接続確認"
+        },
+        "https://its-me-indol.vercel.app/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://oyajibuki.github.io/resize-tool/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://aozora-ruby-remover-n4dpzggyj553wsbnqpl7at.streamlit.app/": {
+          "status": "OK",
+          "note": "HTTP 200 / WebSocket 接続確認",
+          "woke": true
+        },
+        "https://oyajibuki.github.io/csv-app/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://itpassport.vercel.app/itp": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://oyajibuki.github.io/TuneDrop/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://trush-quest.vercel.app/#": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://oyajibuki.github.io/WalkCraft/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://fit-sign.streamlit.app/?code=94d7f18f-894a-435c-bd5d-2be295035426&fid=6231718a-0bda-4e61-8eeb-0677000f7dbf": {
+          "status": "OK",
+          "note": "HTTP 200 / WebSocket 接続確認"
+        },
+        "https://autocraft502-ai-subtitle.hf.space/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        },
+        "https://autocraft502-clearcut.hf.space/": {
+          "status": "OK",
+          "note": "HTTP 200"
+        }
+      }
     }
   ],
-  "updated": "2026-08-12T00:06:44.296Z",
+  "updated": "2026-08-12T06:49:32.405Z",
   "targets": [
     {
       "id": "hf:AutoCraft502/ai-subtitle",
