@@ -5250,9 +5250,27 @@
           "note": "情報取得に失敗 (HTTP 401)"
         }
       }
+    },
+    {
+      "at": "2026-08-19T16:02:47.483Z",
+      "runId": "32270666008",
+      "results": {
+        "hf:AutoCraft502/ai-subtitle": {
+          "status": "OK",
+          "note": "stage=RUNNING"
+        },
+        "hf:AutoCraft502/clearcut": {
+          "status": "OK",
+          "note": "stage=RUNNING"
+        },
+        "supabase": {
+          "status": "OK",
+          "note": "HTTP 200 / クエリ到達 (720 bytes)"
+        }
+      }
     }
   ],
-  "updated": "2026-08-19T15:09:24.289Z",
+  "updated": "2026-08-19T16:02:47.483Z",
   "targets": [
     {
       "id": "hf:AutoCraft502/ai-subtitle",
@@ -5265,9 +5283,9 @@
       "type": "hf-api"
     },
     {
-      "id": "hf:AutoCraft502/linedocs",
-      "label": "AutoCraft502/linedocs",
-      "type": "hf-api"
+      "id": "supabase",
+      "label": "Supabase (templates)",
+      "type": "supabase"
     }
   ],
   "repo": "oyajibuki/Keepalive",
