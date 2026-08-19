@@ -18,9 +18,9 @@
   "_comment_hf": "HF Space はラッパーページでは起きない。本体ドメイン *.hf.space を訪問する。",
   "hfSpaces": [
     "AutoCraft502/ai-subtitle",
-    "AutoCraft502/clearcut",
-    "AutoCraft502/linedocs"
+    "AutoCraft502/clearcut"
   ],
+  "_comment_todo": "HF Space AutoCraft502/linedocs は作成後にここへ戻す。存在しない Space を入れると hf-restart.js が HTTP 401 で exit 1 し、後続の巡回ステップごと止まる。",
 
   "_comment_supabase": "無料プランは7日間の低活動で停止する。ログイン後しかクエリが飛ばないアプリでは、ここで直接叩いて活動を作る。",
   "supabase": {
