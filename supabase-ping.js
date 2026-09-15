@@ -2,26 +2,32 @@
  * Supabase プロジェクトの一時停止を防ぐ。
  *
  * 無料プランは「7日間、活動が少ない」と一時停止される。
- * FitSign は Google ログイン後にしか Supabase へクエリを投げないため、
- * ブラウザで巡回しても Supabase 側には何も届かず、止まってしまう。
- *
- * そこで REST API に直接クエリを投げ、実際に Postgres へ到達させる。
- * ログインは一切不要。
+ * ログイン後にしかクエリを投げないアプリ（FitSign）や、
+ * 家族しか使わないアプリ（NekoBase）はブラウザ巡回では活動が作れないので、
+ * REST API に直接クエリを投げて実際に Postgres へ到達させる。
  *
  * 使うのは anon キー（クライアントに埋め込む前提の公開鍵）。
  * service_role キーは絶対に使わないこと。全 RLS を無視できる管理者権限であり、
  * 漏れると DB を丸ごと操作されてしまう。
  *
- * 設定:
- *   URL … urls.json の supabase.url（秘密情報ではないため直書き）
- *   KEY … 環境変数 SUPABASE_ANON_KEY（GitHub Secrets に登録する）
+ * 設定は urls.json の supabase（配列）。1件ずつこう書く:
+ *   {
+ *     "name":   "表示名",
+ *     "url":    "https://xxxx.supabase.co",
+ *     "table":  "叩くテーブル名",
+ *     "keyEnv": "SUPABASE_ANON_KEY"      … Secret から読む場合
+ *     "key":    "eyJ..."                  … 直書きする場合（どちらか一方）
+ *   }
+ *
+ * key を直書きしてよいのは「すでに公開されている anon キー」だけ。
+ * アプリのバイナリに埋め込んで配っているものは、隠しても意味がないので直書きでよい。
+ * 逆に、まだどこにも出していない鍵は keyEnv（GitHub Secrets）にすること。
  */
 const fs = require('fs');
 const path = require('path');
 const { writeResults } = require('./results');
 
 const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'urls.json'), 'utf8'));
-const TABLE = (CONFIG.supabase && CONFIG.supabase.table) || 'users';
 
 // URL は秘密情報ではない（アプリの通信を見れば分かる）ので urls.json だけを見る。
 // Secret から読む方式は値がマスクされて中身を確認できず、
@@ -39,39 +45,38 @@ function normalizeUrl(raw) {
   }
 }
 
-const URL = normalizeUrl(CONFIG.supabase && CONFIG.supabase.url) || '';
-const KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
+/** 昔の書き方（オブジェクト1件）でも動くようにそろえる */
+function projects() {
+  const raw = CONFIG.supabase;
+  if (!raw) return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+  return list.map((entry, index) => ({
+    name: entry.name || `Supabase ${index + 1}`,
+    url: normalizeUrl(entry.url),
+    table: entry.table || 'users',
+    key: (entry.key || process.env[entry.keyEnv || 'SUPABASE_ANON_KEY'] || '').trim(),
+  }));
+}
 
 const stamp = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 const log = (...a) => console.log(`[${stamp()}]`, ...a);
 
-(async () => {
-  if (!URL || !KEY) {
-    const missing = [
-      !URL && 'urls.json の supabase.url',
-      !KEY && 'Secret の SUPABASE_ANON_KEY',
-    ].filter(Boolean);
-    log(`⏭️ スキップ — 未設定の Secret: ${missing.join(', ')}`);
-    log('→ Settings > Secrets and variables > Actions で登録してください。');
-    writeResults('supabase', [
-      {
-        id: 'supabase',
-        label: 'Supabase',
-        type: 'supabase',
-        status: 'SKIP',
-        note: `未設定: ${missing.join(', ')}`,
-      },
-    ]);
-    return; // 未設定は失敗扱いにしない
+async function ping(project) {
+  const label = `${project.name} (${project.table})`;
+
+  if (!project.url || !project.key) {
+    const missing = [!project.url && 'url', !project.key && 'anon キー'].filter(Boolean);
+    log(`⏭️ SKIP — ${label} — 未設定: ${missing.join(', ')}`);
+    return { id: `supabase-${project.name}`, label, type: 'supabase', status: 'SKIP', note: `未設定: ${missing.join(', ')}` };
   }
 
-  const endpoint = `${URL}/rest/v1/${TABLE}?select=*&limit=1`;
+  const endpoint = `${project.url}/rest/v1/${project.table}?select=*&limit=1`;
   let status = 'OK';
   let note = '';
 
   try {
     const res = await fetch(endpoint, {
-      headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
+      headers: { apikey: project.key, Authorization: `Bearer ${project.key}` },
     });
     const body = await res.text();
     note = `HTTP ${res.status}`;
@@ -86,13 +91,13 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
     if (res.ok) {
       note += ` / クエリ到達 (${body.length} bytes)`;
     } else if (denied) {
-      note += ` / 権限なしだが Postgres に到達（keep-alive としては有効）`;
+      note += ' / 権限なしだが Postgres に到達（keep-alive としては有効）';
     } else if (invalidKey) {
       status = 'FAIL';
       note += ' / APIキーが無効です';
     } else if (res.status === 404) {
       status = 'FAIL';
-      note += ` / テーブル "${TABLE}" が見つかりません（urls.json の supabase.table を確認）`;
+      note += ` / テーブル "${project.table}" が見つかりません（urls.json を確認）`;
     } else if (res.status >= 500) {
       status = 'FAIL';
       note += ' / プロジェクトが停止中の可能性があります';
@@ -105,27 +110,35 @@ const log = (...a) => console.log(`[${stamp()}]`, ...a);
     note = e.message;
   }
 
-  const icon = status === 'OK' ? '✅' : '❌';
-  log(`${icon} ${status} — ${TABLE} — ${note}`);
+  const icon = status === 'OK' ? '✅' : status === 'WARN' ? '⚠️' : '❌';
+  log(`${icon} ${status} — ${label} — ${note}`);
+  return { id: `supabase-${project.name}`, label, type: 'supabase', status, note };
+}
 
-  writeResults('supabase', [
-    {
-      id: 'supabase',
-      label: `Supabase (${TABLE})`,
-      type: 'supabase',
-      status,
-      note,
-    },
-  ]);
+(async () => {
+  const list = projects();
+
+  if (list.length === 0) {
+    log('⏭️ スキップ — urls.json に supabase の設定がありません');
+    writeResults('supabase', []);
+    return;
+  }
+
+  const items = [];
+  for (const project of list) {
+    items.push(await ping(project));
+  }
+
+  writeResults('supabase', items);
 
   const summary = process.env.GITHUB_STEP_SUMMARY;
   if (summary) {
-    fs.appendFileSync(
-      summary,
-      `## Supabase (${stamp()} UTC)\n\n` +
-        `| 結果 | テーブル | 備考 |\n|---|---|---|\n| ${icon} ${status} | ${TABLE} | ${note} |\n\n`
-    );
+    const rows = items
+      .map((i) => `| ${i.status === 'OK' ? '✅' : i.status === 'SKIP' ? '⏭️' : '❌'} ${i.status} | ${i.label} | ${i.note} |`)
+      .join('\n');
+    fs.appendFileSync(summary, `## Supabase (${stamp()} UTC)\n\n| 結果 | プロジェクト | 備考 |\n|---|---|---|\n${rows}\n\n`);
   }
 
-  if (status === 'FAIL') process.exit(1);
+  // 1つでも落ちていたら失敗として扱う（SKIP は未設定なので失敗にしない）
+  if (items.some((i) => i.status === 'FAIL')) process.exit(1);
 })();

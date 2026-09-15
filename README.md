@@ -49,7 +49,8 @@ Streamlit とは挙動が違う。実測した結果は以下のとおり。
 
 無料プランは「7日間、活動が少ない」と一時停止される。
 
-FitSign のように **Google ログイン後にしか Supabase へクエリを投げない**アプリは、
+FitSign のように **Google ログイン後にしか Supabase へクエリを投げない**アプリや、
+NekoBase のように **家族しか開かない**アプリは、
 ブラウザで巡回しても Supabase 側には何も届かないため止まってしまう。
 かといってログインを自動化するのは、パスワードと2段階認証をリポジトリに置くことになり、
 Google 側のブロック対象にもなるので採用しない。
@@ -57,21 +58,34 @@ Google 側のブロック対象にもなるので採用しない。
 代わりに [`supabase-ping.js`](supabase-ping.js) が REST API へ直接クエリを投げ、
 Postgres まで到達させて活動を作る。**ログインは不要**。
 
-設定は2箇所に分かれている。
+### 設定
 
-| 項目 | 置き場所 | 理由 |
-|---|---|---|
-| URL | [`urls.json`](urls.json) の `supabase.url` | 秘密情報ではない。アプリの通信を見れば分かる |
-| anon キー | Secrets の `SUPABASE_ANON_KEY` | 公開鍵とはいえリポジトリに直書きはしない |
+[`urls.json`](urls.json) の `supabase` に**プロジェクトを並べる**（何個でも可）。
 
-キーが未登録ならスキップされる（失敗にはならない）。
+```json
+"supabase": [
+  { "name": "FitSign",  "url": "https://xxxx.supabase.co", "table": "templates", "keyEnv": "SUPABASE_ANON_KEY" },
+  { "name": "NekoBase", "url": "https://yyyy.supabase.co", "table": "cats",      "key": "eyJ..." }
+]
+```
+
+| 項目 | 意味 |
+|---|---|
+| `url` | 秘密情報ではない。アプリの通信を見れば分かるので直書き |
+| `table` | 叩くテーブル。RLS で行が返らなくてもクエリは Postgres に届くので有効 |
+| `keyEnv` | anon キーを GitHub Secrets から読む場合の変数名。省略時は `SUPABASE_ANON_KEY` |
+| `key` | anon キーを直書きする場合。**すでにアプリに埋め込んで配っている鍵のときだけ**使う |
+
+`keyEnv` を足したときは、ワークフローの `Ping Supabase` ステップに
+その環境変数を渡す行を追加すること（Secrets は自動では渡らない）。
+
+キーが未設定のプロジェクトはスキップされる（失敗にはならない）。
+1つでも FAIL があればステップ全体を失敗として扱う。
 
 > ⚠️ **`service_role` キーは絶対に使わないこと。**
 > 全 RLS を無視できる管理者権限で、漏れると DB を丸ごと操作されてしまう。
 > anon キーはもともとクライアントに埋め込む前提の公開鍵なので、こちらを使う。
-
-叩くテーブルは `urls.json` の `supabase.table` で変更できる。
-RLS で行が返らなくてもクエリ自体は Postgres に到達するので、活動としては有効。
+> 直書きしてよいのも anon キーだけで、かつ RLS が効いていることが前提。
 
 ## ダッシュボード
 

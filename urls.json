@@ -22,9 +22,19 @@
   ],
   "_comment_todo": "HF Space AutoCraft502/linedocs は作成後にここへ戻す。存在しない Space を入れると hf-restart.js が HTTP 401 で exit 1 し、後続の巡回ステップごと止まる。",
 
-  "_comment_supabase": "無料プランは7日間の低活動で停止する。ログイン後しかクエリが飛ばないアプリでは、ここで直接叩いて活動を作る。",
-  "supabase": {
-    "url": "https://tzkwsipyybwlcyzvduqw.supabase.co",
-    "table": "templates"
-  }
+  "_comment_supabase": "無料プランは7日間の低活動で停止する。ログイン後しかクエリが飛ばないアプリや、家族しか使わないアプリは、ここで直接叩いて活動を作る。key を直書きしてよいのは、アプリに埋め込んで配っている anon キーだけ。まだ公開していない鍵は keyEnv（GitHub Secrets）にする。",
+  "supabase": [
+    {
+      "name": "FitSign",
+      "url": "https://tzkwsipyybwlcyzvduqw.supabase.co",
+      "table": "templates",
+      "keyEnv": "SUPABASE_ANON_KEY"
+    },
+    {
+      "name": "NekoBase",
+      "url": "https://ampqzkoiijppkvenufnl.supabase.co",
+      "table": "cats",
+      "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtcHF6a29paWpwcGt2ZW51Zm5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyOTcwNDgsImV4cCI6MjEwNDg3MzA0OH0.TB8VwgFCqKCuYChIadsg0Gu7jN59mod-SCcvSJMZHOM"
+    }
+  ]
 }
