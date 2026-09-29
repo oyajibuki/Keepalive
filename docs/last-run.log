@@ -1,53 +1,53 @@
 === Keep Alive デバッグログ ===
-run    : https://github.com/oyajibuki/Keepalive/actions/runs/36561503978
+run    : https://github.com/oyajibuki/Keepalive/actions/runs/36633188017
 trigger: schedule
-started: 2026-09-29 11:24:14 UTC
+started: 2026-09-29 21:25:51 UTC
 
 --- Wake Hugging Face Spaces ---
-[2026-09-29 11:24:14] HF_TOKEN 未設定。状態確認のみ行い、起床は keep-alive.js のブラウザ訪問に任せます。
-[2026-09-29 11:24:14] HF Spaces 2 件
-[2026-09-29 11:24:14] 確認: AutoCraft502/ai-subtitle
-[2026-09-29 11:24:15]   ✅ 稼働中: AutoCraft502/ai-subtitle
-[2026-09-29 11:24:15]   ✅ OK — stage=RUNNING
-[2026-09-29 11:24:15] 確認: AutoCraft502/clearcut
-[2026-09-29 11:24:15]   ✅ 稼働中: AutoCraft502/clearcut
-[2026-09-29 11:24:15]   ✅ OK — stage=RUNNING
+[2026-09-29 21:25:51] HF_TOKEN 未設定。状態確認のみ行い、起床は keep-alive.js のブラウザ訪問に任せます。
+[2026-09-29 21:25:51] HF Spaces 2 件
+[2026-09-29 21:25:51] 確認: AutoCraft502/ai-subtitle
+[2026-09-29 21:25:51]   ✅ 稼働中: AutoCraft502/ai-subtitle
+[2026-09-29 21:25:51]   ✅ OK — stage=RUNNING
+[2026-09-29 21:25:51] 確認: AutoCraft502/clearcut
+[2026-09-29 21:25:51]   ✅ 稼働中: AutoCraft502/clearcut
+[2026-09-29 21:25:51]   ✅ OK — stage=RUNNING
 
 --- Ping Supabase ---
-[2026-09-29 11:24:16] ✅ OK — FitSign (templates) — HTTP 200 / クエリ到達 (720 bytes)
-[2026-09-29 11:24:17] ✅ OK — NekoBase (cats) — HTTP 200 / クエリ到達 (2 bytes)
+[2026-09-29 21:25:53] ✅ OK — FitSign (templates) — HTTP 200 / クエリ到達 (720 bytes)
+[2026-09-29 21:25:54] ✅ OK — NekoBase (cats) — HTTP 200 / クエリ到達 (2 bytes)
 
 --- Run keep-alive ---
-[2026-09-29 11:24:41] 対象 13 件
-[2026-09-29 11:24:41] 訪問: https://oshipay.streamlit.app/?page=ranking&did=dev_7d761837993847aea016
-[2026-09-29 11:25:13]   ✅ OK — HTTP 200 / WebSocket 接続確認
-[2026-09-29 11:25:13] 訪問: https://fit-sign.streamlit.app/
-[2026-09-29 11:25:45]   ✅ OK — HTTP 200 / WebSocket 接続確認
-[2026-09-29 11:25:45] 訪問: https://its-me-indol.vercel.app/
-[2026-09-29 11:25:49]   ✅ OK — HTTP 200
-[2026-09-29 11:25:49] 訪問: https://oyajibuki.github.io/resize-tool/
-[2026-09-29 11:25:54]   ✅ OK — HTTP 200
-[2026-09-29 11:25:54] 訪問: https://aozora-ruby-remover-n4dpzggyj553wsbnqpl7at.streamlit.app/
-[2026-09-29 11:26:26]   ✅ OK — HTTP 200 / WebSocket 接続確認
-[2026-09-29 11:26:26] 訪問: https://oyajibuki.github.io/csv-app/
-[2026-09-29 11:26:30]   ✅ OK — HTTP 200
-[2026-09-29 11:26:30] 訪問: https://itpassport.vercel.app/itp
-[2026-09-29 11:26:34]   ✅ OK — HTTP 200
-[2026-09-29 11:26:34] 訪問: https://oyajibuki.github.io/TuneDrop/
-[2026-09-29 11:26:38]   ✅ OK — HTTP 200
-[2026-09-29 11:26:38] 訪問: https://trush-quest.vercel.app/#
-[2026-09-29 11:26:43]   ✅ OK — HTTP 200
-[2026-09-29 11:26:43] 訪問: https://oyajibuki.github.io/WalkCraft/
-[2026-09-29 11:26:47]   ✅ OK — HTTP 200
-[2026-09-29 11:26:47] 訪問: https://fit-sign.streamlit.app/?code=94d7f18f-894a-435c-bd5d-2be295035426&fid=6231718a-0bda-4e61-8eeb-0677000f7dbf
-[2026-09-29 11:27:19]   ✅ OK — HTTP 200 / WebSocket 接続確認
-[2026-09-29 11:27:19] 訪問: https://autocraft502-ai-subtitle.hf.space/
-[2026-09-29 11:27:49]   ✅ OK — HTTP 200
-[2026-09-29 11:27:49] 訪問: https://autocraft502-clearcut.hf.space/
-[2026-09-29 11:28:20]   ✅ OK — HTTP 200
-[2026-09-29 11:28:20] 全件完了
+[2026-09-29 21:26:21] 対象 13 件
+[2026-09-29 21:26:21] 訪問: https://oshipay.streamlit.app/?page=ranking&did=dev_7d761837993847aea016
+[2026-09-29 21:26:54]   ✅ OK — HTTP 200 / WebSocket 接続確認
+[2026-09-29 21:26:54] 訪問: https://fit-sign.streamlit.app/
+[2026-09-29 21:27:25]   ✅ OK — HTTP 200 / WebSocket 接続確認
+[2026-09-29 21:27:25] 訪問: https://its-me-indol.vercel.app/
+[2026-09-29 21:27:30]   ✅ OK — HTTP 200
+[2026-09-29 21:27:30] 訪問: https://oyajibuki.github.io/resize-tool/
+[2026-09-29 21:27:34]   ✅ OK — HTTP 200
+[2026-09-29 21:27:34] 訪問: https://aozora-ruby-remover-n4dpzggyj553wsbnqpl7at.streamlit.app/
+[2026-09-29 21:28:06]   ✅ OK — HTTP 200 / WebSocket 接続確認
+[2026-09-29 21:28:06] 訪問: https://oyajibuki.github.io/csv-app/
+[2026-09-29 21:28:11]   ✅ OK — HTTP 200
+[2026-09-29 21:28:11] 訪問: https://itpassport.vercel.app/itp
+[2026-09-29 21:28:16]   ✅ OK — HTTP 200
+[2026-09-29 21:28:16] 訪問: https://oyajibuki.github.io/TuneDrop/
+[2026-09-29 21:28:20]   ✅ OK — HTTP 200
+[2026-09-29 21:28:20] 訪問: https://trush-quest.vercel.app/#
+[2026-09-29 21:28:25]   ✅ OK — HTTP 200
+[2026-09-29 21:28:25] 訪問: https://oyajibuki.github.io/WalkCraft/
+[2026-09-29 21:28:29]   ✅ OK — HTTP 200
+[2026-09-29 21:28:29] 訪問: https://fit-sign.streamlit.app/?code=94d7f18f-894a-435c-bd5d-2be295035426&fid=6231718a-0bda-4e61-8eeb-0677000f7dbf
+[2026-09-29 21:29:01]   ✅ OK — HTTP 200 / WebSocket 接続確認
+[2026-09-29 21:29:01] 訪問: https://autocraft502-ai-subtitle.hf.space/
+[2026-09-29 21:29:32]   ✅ OK — HTTP 200
+[2026-09-29 21:29:32] 訪問: https://autocraft502-clearcut.hf.space/
+[2026-09-29 21:30:02]   ✅ OK — HTTP 200
+[2026-09-29 21:30:02] 全件完了
 
 --- Result ---
 keep-alive: success
 履歴を更新しました: 90 回分 / 対象 17 件 (OK=17)
-finished: 2026-09-29 11:28:20 UTC
+finished: 2026-09-29 21:30:03 UTC
