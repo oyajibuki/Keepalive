@@ -35,6 +35,12 @@
       "url": "https://ampqzkoiijppkvenufnl.supabase.co",
       "table": "cats",
       "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtcHF6a29paWpwcGt2ZW51Zm5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyOTcwNDgsImV4cCI6MjEwNDg3MzA0OH0.TB8VwgFCqKCuYChIadsg0Gu7jN59mod-SCcvSJMZHOM"
+    },
+    {
+      "name": "KnowledgeMap",
+      "url": "https://jofdxvnqdgtdzcfnokgh.supabase.co",
+      "table": "user_progress",
+      "keyEnv": "KNOWLEDGEMAP_ANON_KEY"
     }
   ]
 }

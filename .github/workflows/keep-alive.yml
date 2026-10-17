@@ -93,6 +93,7 @@ jobs:
         env:
           # URL は秘密情報ではないので urls.json 側で管理する
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          KNOWLEDGEMAP_ANON_KEY: ${{ secrets.KNOWLEDGEMAP_ANON_KEY }}
         run: |
           echo "" >> docs/last-run.log
           echo "--- Ping Supabase ---" >> docs/last-run.log
