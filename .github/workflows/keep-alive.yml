@@ -77,6 +77,8 @@ jobs:
             echo "started: $(date -u '+%Y-%m-%d %H:%M:%S') UTC"
             echo ""
           } > docs/last-run.log
+          # 巡回した時間帯を残す（アクセスカウンターから巡回分を除外するため）
+          echo "RUN_STARTED_AT=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
 
       # HF Space は訪問しても起きないので、先に API で叩き起こす
       - name: Wake Hugging Face Spaces
@@ -129,10 +131,10 @@ jobs:
 
           echo "finished: $(date -u '+%Y-%m-%d %H:%M:%S') UTC" >> docs/last-run.log
 
-          if [ -n "$(git status --porcelain docs/history.json docs/last-run.log)" ]; then
+          if [ -n "$(git status --porcelain docs/history.json docs/last-run.log docs/run-times.json)" ]; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs/history.json docs/last-run.log
+            git add docs/history.json docs/last-run.log docs/run-times.json
             git commit -m "履歴を更新 [skip ci]"
             # 同時実行や手動 push と競合した場合に備えてリトライする
             for i in 1 2 3; do

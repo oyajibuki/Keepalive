@@ -9,6 +9,7 @@ const path = require('path');
 const { RESULTS_DIR } = require('./results');
 
 const HISTORY = path.join(__dirname, 'docs', 'history.json');
+const RUN_TIMES = path.join(__dirname, 'docs', 'run-times.json');
 const WORKFLOW = path.join(__dirname, '.github', 'workflows', 'keep-alive.yml');
 const MAX_RUNS = 90;
 
@@ -115,6 +116,17 @@ history.schedule = readSchedule();
 
 fs.mkdirSync(path.dirname(HISTORY), { recursive: true });
 fs.writeFileSync(HISTORY, JSON.stringify(history, null, 2));
+
+// 実行した時間帯だけを無期限で残す。history.json は MAX_RUNS で消えていくが、
+// アクセスカウンターから巡回分を除外するには過去の実行時刻がすべて要る。
+let times = [];
+try {
+  times = JSON.parse(fs.readFileSync(RUN_TIMES, 'utf8'));
+} catch {
+  /* 初回は存在しない */
+}
+times.push({ start: process.env.RUN_STARTED_AT || null, end: run.at });
+fs.writeFileSync(RUN_TIMES, JSON.stringify(times));
 
 const counts = items.reduce((a, i) => ((a[i.status] = (a[i.status] || 0) + 1), a), {});
 console.log(
